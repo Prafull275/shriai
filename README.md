@@ -255,7 +255,7 @@ INNGEST_SIGNING_KEY=your_inngest_signing_key
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/shriai.git
+   git clone https://github.com/Prafull275/shriai.git
    cd shriai
    ```
 
