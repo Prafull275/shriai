@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200" role="img" aria-label="ShriAi logo">
+  <defs>
+    <!-- Left -> Middle -> Right gradient -->
+    <linearGradient id="shriGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"  stop-color="#3047FF"/>
+      <stop offset="50%" stop-color="#8A4CFF"/> <!-- your mixed color -->
+      <stop offset="100%" stop-color="#FF4AC8"/>
+    </linearGradient>
+
+    <!-- Optional subtle shadow (comment out if not needed) -->
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background (transparent). Remove rect if you want pure transparent SVG. -->
+  <!-- <rect width="100%" height="100%" fill="#ffffff"/> -->
+
+  <!-- Text: change font-family to match available fonts (Playfair Display, Baskerville, Georgia...) -->
+  <g filter="url(#softShadow)">
+    <text
+      x="50%"
+      y="55%"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-family="'Playfair Display', Georgia, serif"
+      font-weight="600"
+      font-size="96"
+      letter-spacing="0.5"
+      fill="url(#shriGradient)"
+      style="font-kerning:normal;">
+      ShriAi
+    </text>
+  </g>
+</svg>
