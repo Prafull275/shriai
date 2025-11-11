@@ -577,7 +577,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 
 <div align="center">
 
-### Built with ❤️ by the ShriaI Team
+### Built with ❤️ by the SHRIAI Team
 
 ⭐ If you find this project helpful, please consider giving it a star!
 
