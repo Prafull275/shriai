@@ -10,7 +10,7 @@ const HeroSection = () => {
 
   useEffect(() => {
     const imageElement = imageRef.current;
-    if (!imageElement) return; // ✅ Prevent null reference
+    if (!imageElement) return; //  Prevent null reference
 
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -25,7 +25,7 @@ const HeroSection = () => {
 
     window.addEventListener("scroll", handleScroll);
 
-    // ✅ Clean up properly
+    //Clean up properly
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -53,6 +53,11 @@ const HeroSection = () => {
           <Link href="https://www.youtube.com/roadsidecoder">
             <Button size="lg" variant="outline" className="px-8">
               Watch Demo
+            </Button>
+          </Link>
+          <Link href="https://shriai.vercel.app/onboarding">
+            <Button size="lg" className="px-8">
+              Onboarding
             </Button>
           </Link>
         </div>
