@@ -391,14 +391,14 @@ export function EntryForm({ type, entries = [], onChange }) {
           {/* Organization */}
           {type !== "Project" && (
             <Input
-              placeholder="Company / Organization"
+              placeholder="Name"
               {...register("organization")}
             />
           )}
 
           {/* Title */}
           <Input
-            placeholder="Role / Title"
+            placeholder="Designation"
             {...register("title")}
           />
 
