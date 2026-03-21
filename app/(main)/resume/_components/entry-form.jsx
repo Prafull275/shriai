@@ -276,7 +276,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -290,33 +290,49 @@ import useFetch from "@/hooks/use-fetch";
 export function EntryForm({ type, entries = [], onChange }) {
   const [isAdding, setIsAdding] = useState(false);
 
-  const { register, handleSubmit, reset, watch, setValue } = useForm({
-    shouldUnregister: false,
-    defaultValues: {
+  const emptyForm = useMemo(
+    () => ({
       title: "",
       organization: "",
       startDate: "",
       endDate: "",
       description: "",
       current: false,
-    },
+    }),
+    []
+  );
+
+  const { register, handleSubmit, reset, watch, setValue } = useForm({
+    shouldUnregister: true,
+    defaultValues: emptyForm,
   });
 
-  const current = watch("current");
+  useEffect(() => {
+    reset(emptyForm);
+    setIsAdding(false);
+  }, [type, reset, emptyForm]);
 
-  /* ================= ADD ================= */
+  const current = watch("current");
+  const description = watch("description");
 
   const handleAdd = handleSubmit((data) => {
-    onChange([...entries, data]);
-    reset();
+    const cleanedData = {
+      title: data.title?.trim() || "",
+      organization: data.organization?.trim() || "",
+      startDate: data.startDate || "",
+      endDate: data.current ? "" : data.endDate || "",
+      description: data.description?.trim() || "",
+      current: !!data.current,
+    };
+
+    onChange([...(entries || []), cleanedData]);
+    reset(emptyForm);
     setIsAdding(false);
   });
 
   const handleDelete = (index) => {
-    onChange(entries.filter((_, i) => i !== index));
+    onChange((entries || []).filter((_, i) => i !== index));
   };
-
-  /* ================= AI ================= */
 
   const { loading, fn, data } = useFetch(improveWithAI);
 
@@ -328,52 +344,98 @@ export function EntryForm({ type, entries = [], onChange }) {
   }, [data, setValue]);
 
   const improve = async () => {
-    const desc = watch("description");
-    if (!desc) return;
-    await fn({ current: desc, type: type.toLowerCase() });
+    if (!description?.trim()) return;
+    await fn({ current: description, type: type.toLowerCase() });
   };
 
-  /* ================= UI ================= */
+  const labels = {
+    title:
+      type === "Project"
+        ? "Project Title"
+        : type === "Education"
+        ? "Degree / Course"
+        : "Job Title",
+    organization:
+      type === "Education" ? "School / College" : "Company / Organization",
+    description:
+      type === "Project"
+        ? "Describe the project, tech stack, features, and impact"
+        : type === "Education"
+        ? "Describe coursework, achievements, or highlights"
+        : "Describe responsibilities and achievements",
+  };
+
+  const renderDateText = (item) => {
+    if (type === "Project") return null;
+    if (type === "Education") {
+      return item.startDate ? item.startDate : null;
+    }
+    if (type === "Experience") {
+      if (!item.startDate && !item.endDate && !item.current) return null;
+      return `${item.startDate || ""}${
+        item.startDate || item.endDate || item.current ? " - " : ""
+      }${item.current ? "Present" : item.endDate || ""}`;
+    }
+    return null;
+  };
+
+  const renderHeading = (item) => {
+    if (type === "Project") {
+      return item.title || "Untitled Project";
+    }
+    return `${item.title || ""}${
+      item.organization ? ` @ ${item.organization}` : ""
+    }`.trim();
+  };
 
   return (
     <div className="space-y-6">
-
-      {/* Existing Items */}
       {entries.length > 0 &&
-        entries.map((item, index) => (
-          <Card key={index} className="p-4 flex justify-between items-start">
-            <div>
-              <h4 className="font-semibold text-sm">
-                {item.title}
-                {item.organization && ` @ ${item.organization}`}
-              </h4>
+        entries.map((item, index) => {
+          const dateText = renderDateText(item);
 
-              {(item.startDate || item.endDate) && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {item.startDate} - {item.current ? "Present" : item.endDate}
-                </p>
-              )}
-
-              {item.description && (
-                <p className="text-sm mt-2 whitespace-pre-wrap">
-                  {item.description}
-                </p>
-              )}
-            </div>
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleDelete(index)}
+          return (
+            <Card
+              key={`${type}-${index}`}
+              className="p-4 flex justify-between items-start"
             >
-              <X className="h-4 w-4" />
-            </Button>
-          </Card>
-        ))}
+              <div>
+                <h4 className="font-semibold text-sm">{renderHeading(item)}</h4>
 
-      {/* Add Button */}
+                {type === "Education" && item.organization && (
+                  <p className="text-sm mt-1 text-muted-foreground">
+                    {item.organization}
+                  </p>
+                )}
+
+                {dateText && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {dateText}
+                  </p>
+                )}
+
+                {item.description && (
+                  <p className="text-sm mt-2 whitespace-pre-wrap">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => handleDelete(index)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </Card>
+          );
+        })}
+
       {!isAdding && (
         <Button
+          type="button"
           variant="outline"
           className="w-full"
           onClick={() => setIsAdding(true)}
@@ -383,35 +445,35 @@ export function EntryForm({ type, entries = [], onChange }) {
         </Button>
       )}
 
-      {/* Add Form */}
       {isAdding && (
         <Card className="p-6 space-y-4">
           <h3 className="font-semibold">Add {type}</h3>
 
-          {/* Organization */}
           {type !== "Project" && (
             <Input
-              placeholder="Name"
+              placeholder={labels.organization}
               {...register("organization")}
             />
           )}
 
-          {/* Title */}
-          <Input
-            placeholder="Designation"
-            {...register("title")}
-          />
+          <Input placeholder={labels.title} {...register("title")} />
 
-          {/* Dates */}
           {type !== "Project" && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <Input type="month" {...register("startDate")} />
-                {type === "Experience" && (
+
+                {type === "Experience" ? (
                   <Input
                     type="month"
                     {...register("endDate")}
                     disabled={current}
+                  />
+                ) : (
+                  <Input
+                    type="month"
+                    {...register("endDate")}
+                    placeholder="Optional"
                   />
                 )}
               </div>
@@ -420,7 +482,7 @@ export function EntryForm({ type, entries = [], onChange }) {
                 <div className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    {...register("current")}
+                    checked={!!current}
                     onChange={(e) => {
                       setValue("current", e.target.checked);
                       if (e.target.checked) setValue("endDate", "");
@@ -432,9 +494,8 @@ export function EntryForm({ type, entries = [], onChange }) {
             </>
           )}
 
-          {/* Description */}
           <Textarea
-            placeholder="Description"
+            placeholder={labels.description}
             className="h-28"
             {...register("description")}
           />
@@ -443,7 +504,7 @@ export function EntryForm({ type, entries = [], onChange }) {
             type="button"
             variant="ghost"
             onClick={improve}
-            disabled={loading}
+            disabled={loading || !description?.trim()}
           >
             {loading ? (
               <>
@@ -459,10 +520,19 @@ export function EntryForm({ type, entries = [], onChange }) {
           </Button>
 
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsAdding(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                reset(emptyForm);
+                setIsAdding(false);
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleAdd}>Add</Button>
+            <Button type="button" onClick={handleAdd}>
+              Add
+            </Button>
           </div>
         </Card>
       )}

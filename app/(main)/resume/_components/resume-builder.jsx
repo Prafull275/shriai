@@ -427,7 +427,7 @@ import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Check } from "lucide-react";
+import { Download, Check, Save } from "lucide-react";
 
 import ClassicTemplate from "../templates/ClassicTemplate";
 import ModernTemplate from "../templates/ModernTemplate";
@@ -444,74 +444,110 @@ const steps = [
   "Skills",
 ];
 
+const defaultResumeData = {
+  contactInfo: {
+    fullName: "",
+    email: "",
+    phone: "",
+    location: "",
+    profession: "",
+    linkedin: "",
+    website: "",
+  },
+  summary: "",
+  skills: "",
+  experience: [],
+  education: [],
+  projects: [],
+};
+
 export default function ResumeBuilder() {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState("classic");
   const [accentColor, setAccentColor] = useState("#2563eb");
-
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showAccentDropdown, setShowAccentDropdown] = useState(false);
 
-  const { control, register, watch } = useForm({
-    defaultValues: {
-      contactInfo: {},
-      summary: "",
-      skills: "",
-      experience: [],
-      education: [],
-      projects: [],
-    },
+  const [savedResumeData, setSavedResumeData] = useState(defaultResumeData);
+
+  const { control, register, watch, getValues } = useForm({
+    defaultValues: defaultResumeData,
     shouldUnregister: false,
   });
 
   const formValues = watch();
 
-  /* ================= PRINT ================= */
-
   const handlePrint = () => {
     window.print();
   };
 
-  /* ================= TEMPLATE DATA ================= */
+  const handleSaveStep = () => {
+    const values = getValues();
+
+    setSavedResumeData((prev) => ({
+      ...prev,
+      contactInfo: values.contactInfo || prev.contactInfo,
+      summary: values.summary ?? prev.summary,
+      skills: values.skills ?? prev.skills,
+      experience: values.experience || prev.experience,
+      education: values.education || prev.education,
+      projects: values.projects || prev.projects,
+    }));
+  };
+
+  const handleNext = () => {
+    handleSaveStep();
+    if (currentStep < steps.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    handleSaveStep();
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
 
   const buildTemplateData = () => ({
     personal_info: {
-      full_name: formValues.contactInfo?.fullName || "",
-      email: formValues.contactInfo?.email || "",
-      phone: formValues.contactInfo?.phone || "",
-      location: formValues.contactInfo?.location || "",
-      profession: formValues.contactInfo?.profession || "",
-      linkedin: formValues.contactInfo?.linkedin || "",
-      website: formValues.contactInfo?.website || "",
+      full_name: savedResumeData.contactInfo?.fullName || "",
+      email: savedResumeData.contactInfo?.email || "",
+      phone: savedResumeData.contactInfo?.phone || "",
+      location: savedResumeData.contactInfo?.location || "",
+      profession: savedResumeData.contactInfo?.profession || "",
+      linkedin: savedResumeData.contactInfo?.linkedin || "",
+      website: savedResumeData.contactInfo?.website || "",
     },
 
-    professional_summary: formValues.summary || "",
+    professional_summary: savedResumeData.summary || "",
 
-    experience:
-      formValues.experience?.map((exp) => ({
-        position: exp.title || "",
-        company: exp.organization || "",
-        start_date: exp.startDate || "",
-        end_date: exp.endDate || "",
-        is_current: exp.current || false,
-        description: exp.description || "",
-      })) || [],
+    experience: (savedResumeData.experience || []).map((exp) => ({
+      position: exp.title || "",
+      company: exp.organization || "",
+      start_date: exp.startDate || "",
+      end_date: exp.endDate || "",
+      is_current: exp.current || false,
+      description: exp.description || "",
+    })),
 
-    education:
-      formValues.education?.map((edu) => ({
-        degree: edu.title || "",
-        institution: edu.organization || "",
-        graduation_date: edu.startDate || "",
-      })) || [],
+    education: (savedResumeData.education || []).map((edu) => ({
+      degree: edu.title || "",
+      institution: edu.organization || "",
+      graduation_date: edu.startDate || "",
+      description: edu.description || "",
+    })),
 
-    project:
-      formValues.projects?.map((proj) => ({
-        name: proj.title || "",
-        description: proj.description || "",
-      })) || [],
+    projects: (savedResumeData.projects || []).map((proj) => ({
+      name: proj.title || "",
+      description: proj.description || "",
+    })),
 
-    skills: formValues.skills
-      ? formValues.skills.split(",").map((s) => s.trim())
+    skills: savedResumeData.skills
+      ? savedResumeData.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [],
   });
 
@@ -529,8 +565,6 @@ export default function ResumeBuilder() {
         return <ClassicTemplate data={data} accentColor={accentColor} />;
     }
   };
-
-  /* ================= STEP CONTENT ================= */
 
   const renderStep = () => {
     switch (currentStep) {
@@ -562,7 +596,12 @@ export default function ResumeBuilder() {
             name="experience"
             control={control}
             render={({ field }) => (
-              <EntryForm type="Experience" entries={field.value} onChange={field.onChange} />
+              <EntryForm
+                key="experience-form"
+                type="Experience"
+                entries={field.value || []}
+                onChange={field.onChange}
+              />
             )}
           />
         );
@@ -573,7 +612,12 @@ export default function ResumeBuilder() {
             name="education"
             control={control}
             render={({ field }) => (
-              <EntryForm type="Education" entries={field.value} onChange={field.onChange} />
+              <EntryForm
+                key="education-form"
+                type="Education"
+                entries={field.value || []}
+                onChange={field.onChange}
+              />
             )}
           />
         );
@@ -584,7 +628,12 @@ export default function ResumeBuilder() {
             name="projects"
             control={control}
             render={({ field }) => (
-              <EntryForm type="Project" entries={field.value} onChange={field.onChange} />
+              <EntryForm
+                key="project-form"
+                type="Project"
+                entries={field.value || []}
+                onChange={field.onChange}
+              />
             )}
           />
         );
@@ -593,6 +642,7 @@ export default function ResumeBuilder() {
         return (
           <Textarea
             placeholder="Skills (comma separated)"
+            className="h-32"
             {...register("skills")}
           />
         );
@@ -602,20 +652,19 @@ export default function ResumeBuilder() {
     }
   };
 
-  /* ================= UI ================= */
-
   return (
     <>
-      {/* PRINT STYLES */}
       <style jsx global>{`
         @media print {
           body * {
             visibility: hidden;
           }
+
           #resume-print,
           #resume-print * {
             visibility: visible;
           }
+
           #resume-print {
             position: absolute;
             left: 0;
@@ -626,16 +675,11 @@ export default function ResumeBuilder() {
       `}</style>
 
       <div className="grid grid-cols-2 gap-6 p-8 bg-gradient-to-br from-slate-100 to-purple-100 min-h-screen">
-
-        {/* LEFT PANEL */}
         <div className="bg-white p-6 rounded-2xl shadow-lg space-y-6 print:hidden relative">
-
-          {/* TEMPLATE + ACCENT + DOWNLOAD */}
           <div className="flex gap-3 relative">
-
-            {/* TEMPLATE BUTTON */}
             <div className="relative">
               <button
+                type="button"
                 onClick={() => {
                   setShowTemplateDropdown(!showTemplateDropdown);
                   setShowAccentDropdown(false);
@@ -647,7 +691,7 @@ export default function ResumeBuilder() {
 
               {showTemplateDropdown && (
                 <div className="absolute top-12 left-0 w-64 bg-white border rounded-xl shadow-lg p-3 space-y-2 z-50">
-                  {["classic","modern","minimal","minimalImage"].map((template) => (
+                  {["classic", "modern", "minimal", "minimalImage"].map((template) => (
                     <div
                       key={template}
                       onClick={() => {
@@ -666,9 +710,9 @@ export default function ResumeBuilder() {
               )}
             </div>
 
-            {/* ACCENT BUTTON */}
             <div className="relative">
               <button
+                type="button"
                 onClick={() => {
                   setShowAccentDropdown(!showAccentDropdown);
                   setShowTemplateDropdown(false);
@@ -680,7 +724,16 @@ export default function ResumeBuilder() {
 
               {showAccentDropdown && (
                 <div className="absolute top-12 left-0 bg-white border rounded-xl shadow-lg p-4 grid grid-cols-4 gap-4 z-50">
-                  {["#2563eb","#7c3aed","#16a34a","#ef4444","#f97316","#14b8a6","#ec4899","#111827"].map((color) => (
+                  {[
+                    "#2563eb",
+                    "#7c3aed",
+                    "#16a34a",
+                    "#ef4444",
+                    "#f97316",
+                    "#14b8a6",
+                    "#ec4899",
+                    "#111827",
+                  ].map((color) => (
                     <div
                       key={color}
                       onClick={() => {
@@ -698,24 +751,32 @@ export default function ResumeBuilder() {
               )}
             </div>
 
-            {/* DOWNLOAD BUTTON */}
-            <Button onClick={handlePrint} className="ml-auto">
+            <Button type="button" variant="outline" onClick={handleSaveStep}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Step
+            </Button>
+
+            <Button type="button" onClick={handlePrint} className="ml-auto">
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
           </div>
 
-          {/* STEP NAVIGATION */}
           <div className="flex justify-between text-sm text-gray-500">
-            <button disabled={currentStep === 0} onClick={() => setCurrentStep((p) => p - 1)}>
+            <button
+              type="button"
+              disabled={currentStep === 0}
+              onClick={handlePrevious}
+            >
               Previous
             </button>
 
             <span className="font-medium">{steps[currentStep]}</span>
 
             <button
+              type="button"
               disabled={currentStep === steps.length - 1}
-              onClick={() => setCurrentStep((p) => p + 1)}
+              onClick={handleNext}
             >
               Next
             </button>
@@ -724,7 +785,6 @@ export default function ResumeBuilder() {
           <div className="space-y-4">{renderStep()}</div>
         </div>
 
-        {/* RIGHT PANEL */}
         <div
           id="resume-print"
           className="bg-white p-6 rounded-2xl shadow-lg overflow-auto"
