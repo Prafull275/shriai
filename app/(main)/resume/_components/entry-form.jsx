@@ -315,25 +315,6 @@ export function EntryForm({ type, entries = [], onChange }) {
   const current = watch("current");
   const description = watch("description");
 
-  const handleAdd = handleSubmit((data) => {
-    const cleanedData = {
-      title: data.title?.trim() || "",
-      organization: data.organization?.trim() || "",
-      startDate: data.startDate || "",
-      endDate: data.current ? "" : data.endDate || "",
-      description: data.description?.trim() || "",
-      current: !!data.current,
-    };
-
-    onChange([...(entries || []), cleanedData]);
-    reset(emptyForm);
-    setIsAdding(false);
-  });
-
-  const handleDelete = (index) => {
-    onChange((entries || []).filter((_, i) => i !== index));
-  };
-
   const { loading, fn, data } = useFetch(improveWithAI);
 
   useEffect(() => {
@@ -346,6 +327,47 @@ export function EntryForm({ type, entries = [], onChange }) {
   const improve = async () => {
     if (!description?.trim()) return;
     await fn({ current: description, type: type.toLowerCase() });
+  };
+
+  const handleAdd = handleSubmit((data) => {
+    let cleanedData;
+
+    if (type === "Experience") {
+      cleanedData = {
+        title: data.title?.trim() || "",
+        organization: data.organization?.trim() || "",
+        startDate: data.startDate || "",
+        endDate: data.current ? "" : data.endDate || "",
+        description: data.description?.trim() || "",
+        current: !!data.current,
+      };
+    } else if (type === "Education") {
+      cleanedData = {
+        title: data.title?.trim() || "",
+        organization: data.organization?.trim() || "",
+        startDate: data.startDate || "",
+        endDate: data.endDate || "",
+        description: data.description?.trim() || "",
+        current: false,
+      };
+    } else {
+      cleanedData = {
+        title: data.title?.trim() || "",
+        organization: "",
+        startDate: "",
+        endDate: "",
+        description: data.description?.trim() || "",
+        current: false,
+      };
+    }
+
+    onChange([...(entries || []), cleanedData]);
+    reset(emptyForm);
+    setIsAdding(false);
+  });
+
+  const handleDelete = (index) => {
+    onChange((entries || []).filter((_, i) => i !== index));
   };
 
   const labels = {
@@ -365,80 +387,100 @@ export function EntryForm({ type, entries = [], onChange }) {
         : "Describe responsibilities and achievements",
   };
 
-  const renderDateText = (item) => {
-    if (type === "Project") return null;
-    if (type === "Education") {
-      return item.startDate ? item.startDate : null;
-    }
-    if (type === "Experience") {
-      if (!item.startDate && !item.endDate && !item.current) return null;
-      return `${item.startDate || ""}${
-        item.startDate || item.endDate || item.current ? " - " : ""
-      }${item.current ? "Present" : item.endDate || ""}`;
-    }
-    return null;
-  };
-
-  const renderHeading = (item) => {
+  const renderCard = (item) => {
     if (type === "Project") {
-      return item.title || "Untitled Project";
+      return (
+        <>
+          <h4 className="font-semibold text-sm">
+            {item.title || "Untitled Project"}
+          </h4>
+          {item.description && (
+            <p className="text-sm mt-2 whitespace-pre-wrap">
+              {item.description}
+            </p>
+          )}
+        </>
+      );
     }
-    return `${item.title || ""}${
-      item.organization ? ` @ ${item.organization}` : ""
-    }`.trim();
+
+    if (type === "Education") {
+      return (
+        <>
+          <h4 className="font-semibold text-sm">
+            {item.title || "Untitled Education"}
+          </h4>
+          {item.organization && (
+            <p className="text-sm mt-1 text-muted-foreground">
+              {item.organization}
+            </p>
+          )}
+          {item.startDate && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {item.startDate}
+              {item.endDate ? ` - ${item.endDate}` : ""}
+            </p>
+          )}
+          {item.description && (
+            <p className="text-sm mt-2 whitespace-pre-wrap">
+              {item.description}
+            </p>
+          )}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <h4 className="font-semibold text-sm">
+          {item.title || "Untitled Role"}
+          {item.organization ? ` @ ${item.organization}` : ""}
+        </h4>
+        {(item.startDate || item.endDate || item.current) && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {item.startDate || ""}
+            {(item.startDate || item.endDate || item.current) ? " - " : ""}
+            {item.current ? "Present" : item.endDate || ""}
+          </p>
+        )}
+        {item.description && (
+          <p className="text-sm mt-2 whitespace-pre-wrap">
+            {item.description}
+          </p>
+        )}
+      </>
+    );
   };
 
   return (
     <div className="space-y-6">
       {entries.length > 0 &&
-        entries.map((item, index) => {
-          const dateText = renderDateText(item);
+        entries.map((item, index) => (
+          <Card
+            key={`${type}-${index}-${item.title}-${item.organization}`}
+            className="p-4 flex justify-between items-start"
+          >
+            <div>{renderCard(item)}</div>
 
-          return (
-            <Card
-              key={`${type}-${index}`}
-              className="p-4 flex justify-between items-start"
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={() => handleDelete(index)}
             >
-              <div>
-                <h4 className="font-semibold text-sm">{renderHeading(item)}</h4>
-
-                {type === "Education" && item.organization && (
-                  <p className="text-sm mt-1 text-muted-foreground">
-                    {item.organization}
-                  </p>
-                )}
-
-                {dateText && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {dateText}
-                  </p>
-                )}
-
-                {item.description && (
-                  <p className="text-sm mt-2 whitespace-pre-wrap">
-                    {item.description}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => handleDelete(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </Card>
-          );
-        })}
+              <X className="h-4 w-4" />
+            </Button>
+          </Card>
+        ))}
 
       {!isAdding && (
         <Button
           type="button"
           variant="outline"
           className="w-full"
-          onClick={() => setIsAdding(true)}
+          onClick={() => {
+            reset(emptyForm);
+            setIsAdding(true);
+          }}
         >
           <PlusCircle className="h-4 w-4 mr-2" />
           Add {type}
@@ -462,20 +504,11 @@ export function EntryForm({ type, entries = [], onChange }) {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <Input type="month" {...register("startDate")} />
-
-                {type === "Experience" ? (
-                  <Input
-                    type="month"
-                    {...register("endDate")}
-                    disabled={current}
-                  />
-                ) : (
-                  <Input
-                    type="month"
-                    {...register("endDate")}
-                    placeholder="Optional"
-                  />
-                )}
+                <Input
+                  type="month"
+                  {...register("endDate")}
+                  disabled={type === "Experience" && current}
+                />
               </div>
 
               {type === "Experience" && (

@@ -467,46 +467,58 @@ export default function ResumeBuilder() {
   const [accentColor, setAccentColor] = useState("#2563eb");
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showAccentDropdown, setShowAccentDropdown] = useState(false);
-
   const [savedResumeData, setSavedResumeData] = useState(defaultResumeData);
 
-  const { control, register, watch, getValues } = useForm({
+  const { control, register, getValues } = useForm({
     defaultValues: defaultResumeData,
     shouldUnregister: false,
   });
-
-  const formValues = watch();
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleSaveStep = () => {
+  const handleSaveStep = (stepIndex = currentStep) => {
     const values = getValues();
 
-    setSavedResumeData((prev) => ({
-      ...prev,
-      contactInfo: values.contactInfo || prev.contactInfo,
-      summary: values.summary ?? prev.summary,
-      skills: values.skills ?? prev.skills,
-      experience: values.experience || prev.experience,
-      education: values.education || prev.education,
-      projects: values.projects || prev.projects,
-    }));
+    setSavedResumeData((prev) => {
+      const updated = { ...prev };
+
+      switch (stepIndex) {
+        case 0:
+          updated.contactInfo = values.contactInfo || prev.contactInfo;
+          break;
+        case 1:
+          updated.summary = values.summary ?? prev.summary;
+          break;
+        case 2:
+          updated.experience = values.experience || [];
+          break;
+        case 3:
+          updated.education = values.education || [];
+          break;
+        case 4:
+          updated.projects = values.projects || [];
+          break;
+        case 5:
+          updated.skills = values.skills ?? prev.skills;
+          break;
+        default:
+          break;
+      }
+
+      return updated;
+    });
   };
 
   const handleNext = () => {
-    handleSaveStep();
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    }
+    handleSaveStep(currentStep);
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
   const handlePrevious = () => {
-    handleSaveStep();
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    handleSaveStep(currentStep);
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
   const buildTemplateData = () => ({
@@ -570,7 +582,7 @@ export default function ResumeBuilder() {
     switch (currentStep) {
       case 0:
         return (
-          <div className="space-y-4">
+          <div key="step-personal" className="space-y-4">
             <Input placeholder="Full Name" {...register("contactInfo.fullName")} />
             <Input placeholder="Email" {...register("contactInfo.email")} />
             <Input placeholder="Phone" {...register("contactInfo.phone")} />
@@ -583,68 +595,75 @@ export default function ResumeBuilder() {
 
       case 1:
         return (
-          <Textarea
-            placeholder="Write your professional summary..."
-            className="h-32"
-            {...register("summary")}
-          />
+          <div key="step-summary">
+            <Textarea
+              placeholder="Write your professional summary..."
+              className="h-32"
+              {...register("summary")}
+            />
+          </div>
         );
 
       case 2:
         return (
-          <Controller
-            name="experience"
-            control={control}
-            render={({ field }) => (
-              <EntryForm
-                key="experience-form"
-                type="Experience"
-                entries={field.value || []}
-                onChange={field.onChange}
-              />
-            )}
-          />
+          <div key="step-experience">
+            <Controller
+              name="experience"
+              control={control}
+              render={({ field }) => (
+                <EntryForm
+                  type="Experience"
+                  entries={field.value || []}
+                  onChange={(value) => field.onChange(value)}
+                />
+              )}
+            />
+          </div>
         );
 
       case 3:
         return (
-          <Controller
-            name="education"
-            control={control}
-            render={({ field }) => (
-              <EntryForm
-                key="education-form"
-                type="Education"
-                entries={field.value || []}
-                onChange={field.onChange}
-              />
-            )}
-          />
+          <div key="step-education">
+            <Controller
+              name="education"
+              control={control}
+              render={({ field }) => (
+                <EntryForm
+                  type="Education"
+                  entries={field.value || []}
+                  onChange={(value) => field.onChange(value)}
+                />
+              )}
+            />
+          </div>
         );
 
       case 4:
         return (
-          <Controller
-            name="projects"
-            control={control}
-            render={({ field }) => (
-              <EntryForm
-                key="project-form"
-                type="Project"
-                entries={field.value || []}
-                onChange={field.onChange}
-              />
-            )}
-          />
+          <div key="step-projects">
+            <Controller
+              name="projects"
+              control={control}
+              render={({ field }) => (
+                <EntryForm
+                  type="Project"
+                  entries={field.value || []}
+                  onChange={(value) => field.onChange(value)}
+                />
+              )}
+            />
+          </div>
         );
 
       case 5:
         return (
-          <Textarea
-            placeholder="Skills (comma separated)"
-            className="h-32"
-            {...register("skills")}
-          />
+          <div key="step-skills">
+            <Textarea
+              placeholder="Skills (comma separated)"
+              className="h-32"
+              {...register("skills")}
+            />
+          </div>
         );
 
       default:
@@ -751,7 +770,7 @@ export default function ResumeBuilder() {
               )}
             </div>
 
-            <Button type="button" variant="outline" onClick={handleSaveStep}>
+            <Button type="button" variant="outline" onClick={() => handleSaveStep(currentStep)}>
               <Save className="h-4 w-4 mr-2" />
               Save Step
             </Button>
@@ -782,7 +801,9 @@ export default function ResumeBuilder() {
             </button>
           </div>
 
-          <div className="space-y-4">{renderStep()}</div>
+          <div key={currentStep} className="space-y-4">
+            {renderStep()}
+          </div>
         </div>
 
         <div
