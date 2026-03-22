@@ -78,7 +78,7 @@ const Header = async () => {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={"https://ai-interview-sigma-ten.vercel.app/"} className="flex items-center gap-2">
+                <Link href={"https://shriai.onrender.com/"} className="flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
                   AI Mock Interview Prep
                 </Link>
