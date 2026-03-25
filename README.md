@@ -9,7 +9,7 @@
 ![Prisma](https://img.shields.io/badge/Prisma-6.17.1-2d3748?style=for-the-badge&logo=prisma)
 ![Google AI](https://img.shields.io/badge/Google%20AI-Gemini-ea4335?style=for-the-badge&logo=google)
 
-A comprehensive AI-powered platform designed to help professionals advance their careers through intelligent resume building, cover letter generation, interview preparation, and real-time industry insights.
+A comprehensive AI-powered platform designed to help professionals advance their careers through intelligent resume building, cover letter generation, a dedicated AI Interview Module with voice interaction, and real-time industry insights.
 
 [Getting Started](#getting-started) • [Features](#features) • [Tech Stack](#tech-stack) • [Project Structure](#project-structure) • [Installation](#installation)
 
@@ -21,9 +21,11 @@ A comprehensive AI-powered platform designed to help professionals advance their
 
 **ShriaI** is a modern web application that leverages artificial intelligence to provide personalized career development guidance. Whether you're preparing for an interview, building a professional resume, or staying updated with industry trends, ShriaI offers comprehensive tools powered by Google's Gemini AI to help you succeed.
 
+The platform includes a dedicated **AI Interview Module** - a full-stack application featuring live voice interviews, AI-powered question generation, real-time evaluation, and comprehensive performance analytics.
+
 ### Key Capabilities
 - 🤖 **AI-Powered Career Guidance** - Personalized career advice based on your profile and industry
-- 🎯 **Interview Preparation** - Role-specific mock interviews with AI feedback
+- 🎯 **AI Interview Module** - Dedicated full-stack interview platform with voice interaction and AI evaluation
 - 📄 **Smart Resume Creation** - ATS-optimized resume builder with AI assistance
 - 💼 **Cover Letter Generation** - Customize cover letters for specific job opportunities
 - 📊 **Industry Analytics** - Real-time salary data, market trends, and skill demand analysis
@@ -47,13 +49,15 @@ A comprehensive AI-powered platform designed to help professionals advance their
 - **Quick Customization**: Easy editing and customization after generation
 - **Multi-Company Management**: Store and manage multiple cover letters
 
-### 3. **Interview Preparation** 🎤
-- **AI Mock Interviews**: Interactive quizzes with role-specific technical questions
-- **Adaptive Questions**: Questions tailored to your industry and skill set
-- **Instant Feedback**: Get detailed explanations for each answer
-- **Performance Analytics**: Track your progress with detailed performance charts
-- **Improvement Suggestions**: AI-generated tips for areas of improvement
-- **Statistics Dashboard**: View your quiz scores, attempt history, and performance trends
+### 3. **AI Interview Module** 🎤
+- **Dedicated Interview Platform**: Full-stack AI interview system with separate client/server architecture
+- **Resume Analysis**: PDF upload and AI-powered extraction of role, experience, projects, and skills
+- **Dynamic Question Generation**: 5 progressive questions (easy→medium→hard) based on user profile
+- **Live Interview Experience**: Voice synthesis, speech recognition, and real-time timer
+- **AI-Powered Scoring**: Automated evaluation of confidence, communication, and correctness
+- **Comprehensive Reports**: Performance analytics with charts, feedback, and PDF export
+- **Credit-Based System**: Integrated payment system for interview sessions (50 credits per interview)
+- **Interview History**: Track past performances and improvement over time
 
 ### 4. **Industry Insights Dashboard** 📊
 - **Salary Analysis**: Real-time salary ranges by role, location, and experience level
@@ -75,6 +79,116 @@ A comprehensive AI-powered platform designed to help professionals advance their
 - **Quick Stats**: Key metrics about your profile and activity
 - **Career Insights**: Personalized insights based on your industry
 - **Easy Navigation**: Quick access to all tools and features
+
+---
+
+## AI Interview Module Architecture
+
+### Overview
+The AI Interview Module is a dedicated full-stack application consisting of:
+- **Frontend**: React + Vite application with voice interaction and real-time UI
+- **Backend**: Node.js/Express server with AI integration and database management
+- **Database**: MongoDB for user data, interviews, and payment records
+- **AI Service**: OpenRouter API (GPT-4o-mini) for question generation and answer evaluation
+
+### Module Structure
+```
+ai-interview-module/
+├── client/                      # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Step1SetUp.jsx   # Interview setup & resume upload
+│   │   │   ├── Step2Interview.jsx # Live interview interface
+│   │   │   ├── Step3Report.jsx   # Performance report & analytics
+│   │   │   └── Timer.jsx        # Interview timer component
+│   │   ├── pages/
+│   │   │   ├── InterviewPage.jsx # Main interview flow
+│   │   │   ├── InterviewHistory.jsx # Past interviews
+│   │   │   └── InterviewReport.jsx # Detailed reports
+│   │   ├── redux/userSlice.js   # User state management
+│   │   └── utils/firebase.js    # Authentication utilities
+│   └── package.json
+│
+└── server/                      # Node.js backend
+    ├── controllers/
+    │   ├── interview.controller.js # Core interview logic
+    │   ├── auth.controller.js   # Authentication
+    │   ├── payment.controller.js # Payment processing
+    │   └── user.controller.js   # User management
+    ├── models/
+    │   ├── interview.model.js   # Interview schema
+    │   ├── user.model.js        # User schema
+    │   └── payment.model.js     # Payment schema
+    ├── services/
+    │   ├── openRouter.service.js # AI API integration
+    │   └── razorpay.service.js  # Payment gateway
+    ├── routes/                  # API endpoints
+    └── package.json
+```
+
+### Interview Flow
+1. **Setup Phase**: User selects role, experience, interview mode (Technical/HR), uploads resume
+2. **Resume Analysis**: AI extracts structured data from PDF (role, experience, projects, skills)
+3. **Question Generation**: AI creates 5 tailored questions with difficulty progression
+4. **Live Interview**: Voice-guided Q&A with speech recognition and time limits
+5. **Answer Evaluation**: AI scores each response on confidence, communication, correctness
+6. **Report Generation**: Comprehensive analytics with charts and improvement suggestions
+
+### API Endpoints
+- `POST /api/auth/google` - User authentication
+- `POST /api/interview/resume` - Resume upload and analysis
+- `POST /api/interview/generate-questions` - Create interview questions
+- `POST /api/interview/submit-answer` - Submit and evaluate answers
+- `POST /api/interview/finish` - Complete interview and generate report
+- `GET /api/interview/get-interview` - Fetch interview history
+- `GET /api/interview/report/:id` - Get detailed report
+- `POST /api/payment/order` - Create payment order
+- `POST /api/payment/verify` - Verify payment completion
+
+### Key Features
+- **Voice Interaction**: Text-to-speech for questions, speech-to-text for answers
+- **Real-time Timer**: Per-question time limits with automatic submission
+- **AI Feedback**: Instant evaluation with specific improvement tips
+- **Performance Tracking**: Historical data and progress visualization
+- **Credit System**: 50 credits per interview, Razorpay integration
+- **PDF Reports**: Downloadable performance reports with charts
+
+### Setup Instructions
+1. **Install Dependencies**
+   ```bash
+   # Client
+   cd client && npm install
+   
+   # Server
+   cd ../server && npm install
+   ```
+
+2. **Environment Variables**
+   ```env
+   # Server .env
+   PORT=6000
+   MONGODB_URI=mongodb://localhost:27017/ai-interview
+   JWT_SECRET=your_jwt_secret
+   OPENROUTER_API_KEY=your_openrouter_key
+   RAZORPAY_KEY_ID=your_razorpay_key
+   RAZORPAY_SECRET=your_razorpay_secret
+   ```
+
+3. **Run Services**
+   ```bash
+   # Start MongoDB
+   mongod
+   
+   # Start server
+   cd server && npm run dev
+   
+   # Start client (new terminal)
+   cd client && npm run dev
+   ```
+
+4. **Access Application**
+   - Main App: `http://localhost:3000`
+   - Interview Module: `http://localhost:5173` (Vite dev server)
 
 ---
 
@@ -184,6 +298,39 @@ shriai/
 ├── jsconfig.json                # JavaScript configuration
 ├── eslint.config.mjs            # ESLint configuration
 └── README.md                     # This file
+│
+├── client/                      # AI Interview Module - Frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Step1SetUp.jsx   # Interview setup & resume upload
+│   │   │   ├── Step2Interview.jsx # Live interview interface
+│   │   │   ├── Step3Report.jsx   # Performance report & analytics
+│   │   │   └── Timer.jsx        # Interview timer component
+│   │   ├── pages/
+│   │   │   ├── InterviewPage.jsx # Main interview flow
+│   │   │   ├── InterviewHistory.jsx # Past interviews
+│   │   │   └── InterviewReport.jsx # Detailed reports
+│   │   ├── redux/userSlice.js   # User state management
+│   │   └── utils/firebase.js    # Authentication utilities
+│   └── package.json
+│
+└── server/                      # AI Interview Module - Backend
+    ├── controllers/
+    │   ├── interview.controller.js # Core interview logic
+    │   ├── auth.controller.js   # Authentication
+    │   ├── payment.controller.js # Payment processing
+    │   └── user.controller.js   # User management
+    ├── models/
+    │   ├── interview.model.js   # Interview schema
+    │   ├── user.model.js        # User schema
+    │   └── payment.model.js     # Payment schema
+    ├── services/
+    │   ├── openRouter.service.js # AI API integration
+    │   └── razorpay.service.js  # Payment gateway
+    ├── routes/                  # API endpoints
+    ├── middlewares/             # Authentication middleware
+    ├── config/                  # Database & token config
+    └── package.json
 ```
 
 ---
@@ -332,7 +479,19 @@ Secure user management with:
 
 ## Feature Workflows
 
-### Interview Preparation Workflow
+### AI Interview Module Workflow
+1. User accesses the dedicated AI Interview Module (separate client/server)
+2. Uploads resume PDF for AI analysis (extracts role, experience, projects, skills)
+3. Selects interview mode (Technical/HR) and provides role details
+4. AI generates 5 progressive questions (easy→medium→hard) based on profile
+5. Live interview begins with voice synthesis and speech recognition
+6. Each answer is evaluated in real-time on confidence, communication, correctness
+7. Time limits per question with automatic submission
+8. Interview completes and final scores are calculated
+9. Comprehensive report generated with charts, feedback, and PDF export
+10. Interview history tracked for performance improvement analysis
+
+### Interview Preparation Workflow (Main App)
 1. User navigates to Interview Preparation
 2. System generates 10 role-specific questions based on user's industry and skills
 3. User answers each question
